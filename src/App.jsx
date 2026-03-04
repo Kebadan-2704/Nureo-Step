@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ref, get, set } from 'firebase/database';
-import { database } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { database, auth } from './firebase';
 
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
@@ -59,32 +60,36 @@ function App() {
 
     let cancelled = false;
 
-    // 3-second safety timeout
+    // 4-second safety timeout
     const timer = setTimeout(() => {
       if (!cancelled) {
         cancelled = true;
         setAppState('ready');
       }
-    }, 3000);
+    }, 4000);
 
-    get(ref(database, 'neurostep/profile'))
-      .then((snapshot) => {
-        if (!cancelled) {
-          cancelled = true;
-          clearTimeout(timer);
-          setHasProfile(!!(snapshot.exists() && snapshot.val()?.name));
-          setAppState('ready');
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          cancelled = true;
-          clearTimeout(timer);
-          setAppState('ready');
-        }
-      });
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && !cancelled) {
+        get(ref(database, 'neurostep/profile'))
+          .then((snapshot) => {
+            if (!cancelled) {
+              cancelled = true;
+              clearTimeout(timer);
+              setHasProfile(!!(snapshot.exists() && snapshot.val()?.name));
+              setAppState('ready');
+            }
+          })
+          .catch(() => {
+            if (!cancelled) {
+              cancelled = true;
+              clearTimeout(timer);
+              setAppState('ready');
+            }
+          });
+      }
+    });
 
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => { cancelled = true; clearTimeout(timer); unsubscribe(); };
   }, [appState]);
 
   const handleSplashComplete = () => setAppState('checking');

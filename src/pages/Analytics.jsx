@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import FootPressureMap from '../components/FootPressureMap';
+import { MapPin, Navigation } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
 
@@ -13,8 +14,29 @@ const anim = (i) => ({ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 
 export default function Analytics() {
     const [history, setHistory] = useState([]);
     const [live, setLive] = useState(null);
+    const [location, setLocation] = useState('Fetching location...');
 
     useEffect(() => {
+        // Fetch Location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+                        const data = await res.json();
+                        const city = data.address.city || data.address.town || data.address.village || 'Unknown Region';
+                        const country = data.address.country || '';
+                        setLocation(`${city}, ${country}`);
+                    } catch {
+                        setLocation(`${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`);
+                    }
+                },
+                () => setLocation('Location access denied')
+            );
+        } else {
+            setLocation('Geolocation unsupported');
+        }
+
         const u1 = onValue(ref(database, 'neurostep/history'), (s) => {
             const d = s.val();
             if (d) {
@@ -61,17 +83,25 @@ export default function Analytics() {
     ];
 
     return (
-        <div className="p-4 pt-8 pb-4 max-w-md mx-auto">
-            <header className="mb-5">
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Analytics</h1>
-                <p className="text-[10px] text-[#2979FF] font-bold tracking-widest uppercase mt-0.5">Gait Visualization</p>
+        <div className="p-4 pt-6 pb-4 max-w-md mx-auto">
+            <header className="mb-5 flex justify-between items-end">
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Analytics</h1>
+                    <p className="text-[9px] text-[#2979FF] font-bold tracking-widest uppercase mt-0.5">Gait Visualization</p>
+                </div>
+
+                {/* Location Badge */}
+                <div className="glass px-3 py-2 rounded-xl flex items-center gap-2 border border-[#ffffff10]">
+                    <Navigation size={12} className="text-[#2979FF]" />
+                    <span className="text-[10px] font-bold text-gray-300 tracking-wide">{location}</span>
+                </div>
             </header>
 
             <motion.div variants={anim(0)} initial="hidden" animate="visible">
                 <FootPressureMap leftZones={live?.footprint_left || [2, 1, 3, 2, 1]} rightZones={live?.footprint_right || [1, 2, 1, 3, 2]} />
             </motion.div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 mt-2">
                 {charts.map((ch, i) => (
                     <motion.div key={ch.title} variants={anim(i + 1)} initial="hidden" animate="visible" className="glass-panel rounded-2xl p-4">
                         <h3 className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-3">{ch.title}</h3>

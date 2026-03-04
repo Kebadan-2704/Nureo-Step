@@ -3,7 +3,7 @@ import { ref, onValue } from 'firebase/database';
 import { database } from '../firebase';
 import GaugeCard from '../components/GaugeCard';
 import MetricCard from '../components/MetricCard';
-import { Footprints, Clock, ActivitySquare, AlertCircle } from 'lucide-react';
+import { Footprints, Clock, ActivitySquare, AlertCircle, Activity } from 'lucide-react';
 
 const safe = (v, d = 2) => { const n = Number(v); return isNaN(n) ? '—' : n.toFixed(d); };
 
@@ -33,23 +33,29 @@ export default function Home() {
     const status = (s) => s < 1 ? 'Stable' : s < 2 ? 'Mild Instability' : s < 3 ? 'Moderate Risk' : 'High Fall Risk';
 
     return (
-        <div className="p-4 pt-8 pb-4 max-w-md mx-auto">
-            <header className="mb-5 flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Dashboard</h1>
-                    <p className="text-[10px] text-[#00E676] font-bold tracking-widest uppercase mt-0.5">Live Monitoring</p>
+        <div className="p-4 pt-6 pb-4 max-w-md mx-auto">
+            {/* Redesigned Header with Logo */}
+            <header className="mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00E676] to-[#2979FF] flex items-center justify-center shadow-[0_0_15px_rgba(0,230,118,0.3)]">
+                        <Activity className="text-white" size={22} />
+                    </div>
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">NeuroStep</h1>
+                        <p className="text-[9px] text-gray-400 font-bold tracking-widest uppercase">Live Dashboard</p>
+                    </div>
                 </div>
-                <div className="flex glass rounded-full px-3 py-1.5 items-center">
-                    <div className={`w-2 h-2 rounded-full mr-2 ${connected ? 'bg-[#00E676] shadow-[0_0_6px_#00E676] animate-pulse' : 'bg-[#FF5252]'}`} />
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{connected ? 'Live' : 'Offline'}</span>
+                <div className="flex glass rounded-full px-3 py-1.5 items-center border border-[#ffffff10]">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${connected ? 'bg-[#00E676] shadow-[0_0_8px_#00E676] animate-pulse' : 'bg-[#FF5252]'}`} />
+                    <span className="text-[9px] font-bold text-white uppercase tracking-widest">{connected ? 'Online' : 'Offline'}</span>
                 </div>
             </header>
 
-            <GaugeCard score={live.instability} status={status(live.instability)} systemStatus={connected ? 'Active' : 'Connecting'} />
+            <GaugeCard score={live.instability} status={status(live.instability)} systemStatus={connected ? 'Active' : 'Listening...'} />
 
-            <h3 className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-3 ml-0.5">Gait Metrics</h3>
+            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Live Biometrics</h3>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-3">
                 <MetricCard index={0} title="L Step" value={safe(live.step_left)} unit="s" icon={Clock} />
                 <MetricCard index={1} title="R Step" value={safe(live.step_right)} unit="s" icon={Clock} />
                 <MetricCard index={2} title="Symmetry" value={safe(live.symmetry)} icon={ActivitySquare}

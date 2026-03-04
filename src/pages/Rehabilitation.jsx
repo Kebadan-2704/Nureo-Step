@@ -37,7 +37,7 @@ export default function Rehabilitation() {
         try {
             const res = await fetch(`https://chatbot.codexapi.workers.dev/?prompt=${encodeURIComponent(prompt)}&model=gpt-5.1`);
             const data = await res.json();
-            setMessages(prev => [...prev, { role: 'ai', text: data.response || 'Unable to analyze right now.' }]);
+            setMessages(prev => [...prev, { role: 'ai', text: data.answer || 'Unable to analyze right now.' }]);
         } catch {
             setMessages(prev => [...prev, { role: 'ai', text: 'Connection issue. Please try again.' }]);
         } finally { setTyping(false); }
